@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивті ЖИ Промпт-Лабораториясы</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #eef2ff, #f0fdf4);
+            color: #1e293b;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            padding: 32px;
+        }
+        h1 {
+            color: #312e81;
+            text-align: center;
+            font-size: 26px;
+            margin-bottom: 6px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            font-size: 15px;
+            margin-bottom: 25px;
+        }
+        /* Жағдаятты ауыстыру батырмалары (Табтар) */
+        .scenario-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            flex: 1;
+            min-width: 180px;
+            padding: 12px 16px;
+            background: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .tab-btn:hover {
+            background: #e2e8f0;
+        }
+        .tab-btn.active {
+            background: #4f46e5;
+            color: #ffffff;
+            border-color: #4338ca;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+        /* Жағдаят сипаттамасы */
+        .case-card {
+            background-color: #f8fafc;
+            border-left: 6px solid #4f46e5;
+            padding: 16px 20px;
+            border-radius: 10px;
+            margin-bottom: 22px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .case-card b {
+            color: #3730a3;
+        }
+        /* Мәтіндік промпт конструкторы */
+        .prompt-builder {
+            background: #faf5ff;
+            border: 2px dashed #a855f7;
+            border-radius: 16px;
+            padding: 24px;
+            font-size: 17px;
+            line-height: 2.4;
+            color: #3b0764;
+            margin-bottom: 20px;
+        }
+        /* Тізімдер стилі */
+        select {
+            font-size: 15px;
+            font-weight: 600;
+            color: #4338ca;
+            background: #ffffff;
+            border: 2px solid #818cf8;
+            border-radius: 8px;
+            padding: 5px 10px;
+            margin: 0 4px;
+            cursor: pointer;
+            outline: none;
+            transition: 0.2s;
+        }
+        select:hover {
+            border-color: #4f46e5;
+        }
+        select:focus {
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+        }
+        .btn-run {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-run:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.3);
+        }
+        /* ЖИ чат нәтижесі */
+        .chat-container {
+            display: none;
+            margin-top: 25px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+        }
+        .chat-top {
+            background: #312e81;
+            color: #ffffff;
+            padding: 12px 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chat-content {
+            padding: 24px;
+            background: #ffffff;
+        }
+        .user-bubble {
+            background: #ede9fe;
+            color: #3b0764;
+            padding: 14px 18px;
+            border-radius: 14px 14px 0 14px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        .ai-bubble {
+            background: #f8fafc;
+            border-left: 5px solid #10b981;
+            padding: 18px 22px;
+            border-radius: 0 14px 14px 14px;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 15px;
+            color: #6366f1;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🤖 ЖИ Промпт-Лабораториясы: Эргономика</h1>
+    <div class="subtitle">Жағдаятты таңдап, сөйлем ішіндегі қажетті эргономикалық сөздерді орнына қойыңыз!</div>
+
+    <!-- Табтар: Таза 1-жағдаят, 2-жағдаят, 3-жағдаят -->
+    <div class="scenario-tabs">
+        <button type="button" class="tab-btn active" onclick="loadScenario(1)">1-жағдаят</button>
+        <button type="button" class="tab-btn" onclick="loadScenario(2)">2-жағдаят</button>
+        <button type="button" class="tab-btn" onclick="loadScenario(3)">3-жағдаят</button>
+    </div>
+
+    <!-- Сипаттама карточкасы -->
+    <div class="case-card" id="caseDescription"></div>
+
+    <!-- Интерактивті мәтін құрастыру аймағы -->
+    <div class="prompt-builder" id="promptArea"></div>
+
+    <button type="button" class="btn-run" onclick="sendToAI()">
+        <span>Жасанды Интеллектке жіберу</span> 🚀
+    </button>
+
+    <div class="loader" id="loader">ЖИ жауапты өңдеп жатыр... ⏳</div>
+
+    <!-- Чат нәтижесі -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-top">✨ Gemini AI Кеңесшісі</div>
+        <div class="chat-content">
+            <div class="user-bubble" id="userBubble"></div>
+            <div class="ai-bubble" id="aiBubble"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const scenarios = {
+        1: {
+            title: "1-жағдаят",
+            desc: "<b>1-жағдаят:</b> Әли үй тапсырмасын орындағанда ноутбугін төсекке қойып, етпетінен жатып оқиды. Оның мойны мен белі үнемі ауыратын болды.",
+            template: `Сен <select id="p_role">
+                <option value="">(рөлді таңдаңыз)</option>
+                <option value="дәрігер-эргономистсің">дәрігер-эргономистсің</option>
+                <option value="бағдарламашысың">бағдарламашысың</option>
+                <option value="блогерсің">блогерсің</option>
+            </select>. 
+            Оқушының арқасы ауырмауы үшін оған 
+            <select id="p_item1">
+                <option value="">(отыру қалпы)</option>
+                <option value="орындықтың арқалығына сүйеніп, тік отыруды">орындықтың арқалығына сүйеніп, тік отыруды</option>
+                <option value="жастыққа жантайып жатуды">жастыққа жантайып жатуды</option>
+                <option value="аяқты үстелге қоюды">аяқты үстелге қоюды</option>
+            </select>, 
+            ал экранды көзден 
+            <select id="p_item2">
+                <option value="">(қашықтық)</option>
+                <option value="50-70 см (созылған қол) қашықтықта">50-70 см (созылған қол) қашықтықта</option>
+                <option value="10-15 см жақын жерде">10-15 см жақын жерде</option>
+                <option value="2 метр алыста">2 метр алыста</option>
+            </select> ұстауға және 
+            <select id="p_item3">
+                <option value="">(жаттығу)</option>
+                <option value="мойын мен иықты қозғайтын сергіту жасауға">мойын мен иықты қозғайтын сергіту жасауға</option>
+                <option value="тоқтаусыз 3 сағат ойын ойнауға">тоқтаусыз 3 сағат ойын ойнауға</option>
+            </select> кеңес бер.`,
+            check: () => {
+                return document.getElementById("p_role").value.includes("эргономист") &&
+                       document.getElementById("p_item1").value.includes("тік отыру") &&
+                       document.getElementById("p_item2").value.includes("50-70") &&
+                       document.getElementById("p_item3").value.includes("мойын");
+            },
+            successReply: `
+                <h3 style="color:#059669; margin-top:0;">Дәрігер кеңесі (Керемет құрастырылған сұраныс!):</h3>
+                <p>Төсекте жатып ноутбукпен жұмыс істеу — омыртқа мен мойынға артық жүктеме түсіреді. Денсаулықты сақтау үшін мына кеңестерді орындаңыз:</p>
+                <ul>
+                    <li><b>Тік отырыс:</b> Арқаңызды орындық арқалығына нық сүйеп, табанды еденге толық тіреңіз.</li>
+                    <li><b>Экран биіктігі:</b> Экран көзден 50–70 см қашықтықта әрі көз деңгейінде болуы қажет.</li>
+                    <li><b>Сергіту жаттығуы:</b> Әр 20 минут сайын басты баяу оңға-солға бұрып, иықты қозғап отырыңыз.</li>
+                </ul>`
+        },
+        2: {
+            title: "2-жағдаят",
+            desc: "<b>2-жағдаят:</b> Айзере қараңғы бөлмеде телефон мен мониторға үзіліссіз 2 сағат қарайды. Кешке көзі қызарып, басы ауырады.",
+            template: `Сен <select id="p_role">
+                <option value="">(рөлді таңдаңыз)</option>
+                <option value="офтальмолог-дәрігерсің">офтальмолог-дәрігерсің</option>
+                <option value="мектеп күзетшісісің">мектеп күзетшісісің</option>
+            </select>. 
+            Айзереге көзді сақтау үшін бөлмеге 
+            <select id="p_item1">
+                <option value="">(жарықтандыру)</option>
+                <option value="экранға шағылыспайтын біркелкі жарық қосуды">экранға шағылыспайтын біркелкі жарық қосуды</option>
+                <option value="барлық шамды өшіріп тастауды">барлық шамды өшіріп тастауды</option>
+            </select>, 
+            компьютердегі үздіксіз уақытты 
+            <select id="p_item2">
+                <option value="">(уақыт нормасы)</option>
+                <option value="15-20 минуттан асырмауды">15-20 минуттан асырмауды</option>
+                <option value="күні бойы үзіліссіз отыруды">күні бойы үзіліссіз отыруды</option>
+            </select> және 
+            <select id="p_item3">
+                <option value="">(көз ережесі)</option>
+                <option value="«20-20-20» ережесімен көзді жыпылықтатуды">«20-20-20» ережесімен көзді жыпылықтатуды</option>
+                <option value="көзді мүлдем жыпылықтатпауды">көзді мүлдем жыпылықтатпауды</option>
+            </select> түсіндіріп жазып бер.`,
+            check: () => {
+                return document.getElementById("p_role").value.includes("офтальмолог") &&
+                       document.getElementById("p_item1").value.includes("біркелкі жарық") &&
+                       document.getElementById("p_item2").value.includes("15-20") &&
+                       document.getElementById("p_item3").value.includes("20-20-20");
+            },
+            successReply: `
+                <h3 style="color:#059669; margin-top:0;">Офтальмолог-дәрігердің қорытындысы:</h3>
+                <p>Қараңғы бөлмеде тек экран жарығымен жұмыс істеу көзді тез шаршатады!</p>
+                <ul>
+                    <li><b>Жарықтандыру:</b> Бөлмеде біркелкі жарық болуы керек, бірақ шам сәулесі экранға шағылыспауы тиіс.</li>
+                    <li><b>15–20 минут ережесі:</b> 5-сынып оқушысы үшін экран алдындағы үздіксіз жұмыс 20 минуттан аспағаны дұрыс.</li>
+                    <li><b>«20–20–20» әдісі:</b> Әр 20 минут сайын 20 секунд бойы алыстағы (6 метр) затқа қарап, көзді демалтып алыңыз.</li>
+                </ul>`
+        },
+        3: {
+            title: "3-жағдаят",
+            desc: "<b>3-жағдаят:</b> Арман пернетақтада мәтін тергенде шынтағы үстелден салбырап тұрады, ал тышқанды қатты қысып ұстайды. Саусақтары тез шаршайды.",
+            template: `Сен <select id="p_role">
+                <option value="">(рөлді таңдаңыз)</option>
+                <option value="эргономика және информатика маманысың">эргономика және информатика маманысың</option>
+                <option value="киноактерсің">киноактерсің</option>
+            </select>. 
+            Арманның қолы талмауы үшін шынтақты 
+            <select id="p_item1">
+                <option value="">(шынтақ бұрышы)</option>
+                <option value="90-100 градус бұрышта ұстауды">90-100 градус бұрышта ұстауды</option>
+                <option value="жоғары көтеріп салбыратуды">жоғары көтеріп салбыратуды</option>
+            </select>, 
+            білекті 
+            <select id="p_item2">
+                <option value="">(білек орны)</option>
+                <option value="үстел бетіне еркін қойып жазуды">үстел бетіне еркін қойып жазуды</option>
+                <option value="ауада көтеріп ұстауды">ауада көтеріп ұстауды</option>
+            </select> және 
+            <select id="p_item3">
+                <option value="">(қол жаттығуы)</option>
+                <option value="саусақтар мен білекке шағын жаттығу жасауды">саусақтар мен білекке шағын жаттығу жасауды</option>
+                <option value="пернелерді бар күшпен ұрғылауды">пернелерді бар күшпен ұрғылауды</option>
+            </select> үйрет.`,
+            check: () => {
+                return document.getElementById("p_role").value.includes("информатика") &&
+                       document.getElementById("p_item1").value.includes("90-100") &&
+                       document.getElementById("p_item2").value.includes("еркін қойып") &&
+                       document.getElementById("p_item3").value.includes("жаттығу");
+            },
+            successReply: `
+                <h3 style="color:#059669; margin-top:0;">Эргономист кеңесі:</h3>
+                <p>Қолдың дұрыс орналаспауы білек буындарының шаршауы мен саусақтардың ұюына әкеледі.</p>
+                <ul>
+                    <li><b>90–100 градус бұрыш:</b> Орындықты реттеп, шынтақтың үстелмен тік бұрыш жасауын қадағалаңыз.</li>
+                    <li><b>Білек еркіндігі:</b> Білек үстел үстінде немесе тіреуіште еркін жатуы тиіс, ауада салбырамасын.</li>
+                    <li><b>Қол жаттығуы:</b> Жұмыс арасында саусақтарды жұдырыққа түйіп ашып, білекті айналдырып демалтыңыз.</li>
+                </ul>`
+        }
+    };
+
+    let currentScenarioId = 1;
+
+    function loadScenario(id) {
+        currentScenarioId = id;
+        
+        const buttons = document.querySelectorAll(".tab-btn");
+        buttons.forEach((btn, index) => {
+            btn.classList.toggle("active", (index + 1) === id);
+        });
+
+        document.getElementById("caseDescription").innerHTML = scenarios[id].desc;
+        document.getElementById("promptArea").innerHTML = scenarios[id].template;
+
+        document.getElementById("chatContainer").style.display = "none";
+    }
+
+    function sendToAI() {
+        const sc = scenarios[currentScenarioId];
+        const selects = document.querySelectorAll("#promptArea select");
+
+        for (let s of selects) {
+            if (!s.value) {
+                alert("Барлық бос орындардағы қажетті сөздерді таңдаңыз!");
+                return;
+            }
+        }
+
+        let promptText = "«";
+        const promptArea = document.getElementById("promptArea");
+        for (let node of promptArea.childNodes) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                promptText += node.textContent.trim() + " ";
+            } else if (node.tagName === "SELECT") {
+                promptText += "<b>" + node.value + "</b> ";
+            }
+        }
+        promptText = promptText.trim() + "»";
+
+        document.getElementById("loader").style.display = "block";
+        document.getElementById("chatContainer").style.display = "none";
+
+        setTimeout(() => {
+            document.getElementById("loader").style.display = "none";
+            document.getElementById("chatContainer").style.display = "block";
+            document.getElementById("userBubble").innerHTML = `<b>Сенің құрастырған промптың:</b><br>${promptText}`;
+
+            const aiBubble = document.getElementById("aiBubble");
+            if (sc.check()) {
+                aiBubble.innerHTML = sc.successReply;
+                aiBubble.style.borderLeftColor = "#10b981";
+            } else {
+                aiBubble.innerHTML = `
+                    <h3 style="color:#d97706; margin-top:0;">⚠️ ЖИ жауабында сәйкессіздік бар:</h3>
+                    <p>Сенің сұранысыңда таңдалған сөздер эргономика ережесіне немесе маманның міндетіне сай келмейді.</p>
+                    <p><b>Кеңес:</b> Таңдалған сандар мен ережелерді қайта тексеріп, дұрыс сөздерді таңдап қайта жібер!</p>
+                `;
+                aiBubble.style.borderLeftColor = "#f59e0b";
+            }
+
+            document.getElementById("chatContainer").scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+    }
+
+    window.onload = () => loadScenario(1);
+</script>
+
+</body>
+</html>
